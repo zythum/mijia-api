@@ -657,54 +657,115 @@ export async function getDeviceInfo(
 
   const html = await response.text();
 
-  // 从 HTML 中提取 data-page 属性的 JSON
-  const match = html.match(/data-page="(.*?)">/);
-  if (!match) {
-    throw new GetDeviceInfoError(deviceModel);
+  // 从 HTML 中提取页面数据（支持新旧两种格式）
+  let pageData: Record<string, unknown>;
+
+  // 新格式: <script data-page="app" type="application/json">{...json...}</script>
+  const scriptMatch = html.match(/<script\s+data-page="app"\s+type="application\/json">([\s\S]*?)<\/script>/);
+  if (scriptMatch) {
+    pageData = JSON.parse(scriptMatch[1]);
+  } else {
+    // 旧格式: data-page="{...json...}">
+    const attrMatch = html.match(/data-page="(.*?)">/);
+    if (!attrMatch) {
+      throw new GetDeviceInfoError(deviceModel);
+    }
+    const rawJson = attrMatch[1].replace(/&quot;/g, '"');
+    pageData = JSON.parse(rawJson);
   }
 
-  const rawJson = match[1].replace(/&quot;/g, '"');
-  const pageData = JSON.parse(rawJson);
-
   // 解析规格数据
-  const product = pageData['props']['product'];
-  const spec = pageData['props']['spec'];
+  const propsData = pageData['props'] as Record<string, unknown>;
+  const product = propsData['product'] as Record<string, unknown> | undefined;
+  const spec = propsData['spec'] as Record<string, unknown>;
 
   const result: DeviceInfo = {
-    name: product?.['name'] || spec['name'] || deviceModel,
-    model: product?.['model'] || deviceModel,
+    name: (product?.['name'] as string) || (spec?.['name'] as string) || deviceModel,
+    model: (product?.['model'] as string) || deviceModel,
     properties: [],
     actions: [],
   };
 
-  const services = spec['services'];
+  // 获取 services 列表（支持新旧两种格式）
+  let servicesList: Record<string, unknown>[] = [];
+
+  // 新格式: tree.services 是数组
+  const tree = propsData['tree'] as Record<string, unknown> | undefined;
+  const treeServices = tree?.['services'];
+  if (treeServices !== undefined && treeServices !== null && Array.isArray(treeServices)) {
+    servicesList = treeServices as Record<string, unknown>[];
+  } else if (spec?.['services'] !== undefined && spec?.['services'] !== null) {
+    // 旧格式: spec.services 是以 siid 为 key 的对象
+    const servicesObj = spec['services'] as Record<string, unknown>;
+    servicesList = Object.values(servicesObj) as Record<string, unknown>[];
+  }
+
   const propNamesSeen: string[] = [];
   const actionNamesSeen: string[] = [];
 
-  for (const siid of Object.keys(services)) {
-    const service = services[siid];
+  for (const service of servicesList) {
+    const siid = Number(service['iid']);
 
     // 解析属性
-    if (service['properties']) {
-      for (const piid of Object.keys(service['properties'])) {
-        const prop = service['properties'][piid];
-
-        // 推导属性类型
+    const rawProps = service['properties'];
+    if (rawProps && Array.isArray(rawProps)) {
+      // 新格式: properties 是数组
+      const propsArr = rawProps as Record<string, unknown>[];
+      for (const prop of propsArr) {
         let propType: string;
-        if ((prop['format'] as string).startsWith('int')) {
+        const fmt = prop['format'] as string;
+        if (fmt?.startsWith('int')) {
           propType = 'int';
-        } else if ((prop['format'] as string).startsWith('uint')) {
+        } else if (fmt?.startsWith('uint')) {
           propType = 'uint';
         } else {
-          propType = prop['format'] as string;
+          propType = fmt || 'string';
         }
 
         const access = prop['access'] as string[];
         const rw =
-          (access.includes('read') ? 'r' : '') +
-          (access.includes('write') ? 'w' : '');
+          (access?.includes('read') ? 'r' : '') +
+          (access?.includes('write') ? 'w' : '');
 
-        // 处理属性名冲突（不同 service 可能有同名属性）
+        let name = prop['type'] as string;
+        if (propNamesSeen.includes(name)) {
+          name = `${service['type']}-${name}`;
+        }
+        propNamesSeen.push(name);
+
+        result.properties.push({
+          name,
+          description: `${prop['description'] || ''}`,
+          type: propType as DevPropDef['type'],
+          rw,
+          unit: (prop['unit'] as string) || null,
+          range: (prop['value-range'] as number[]) || (prop['valueRange'] as number[]) || null,
+          'value-list': ((prop['value-list'] as DevPropDef['value-list'])?.length ? (prop['value-list'] as DevPropDef['value-list']) : null) ||
+            ((prop['valueList'] as DevPropDef['value-list'])?.length ? (prop['valueList'] as DevPropDef['value-list']) : null),
+          method: { siid, piid: Number(prop['iid']) },
+        });
+      }
+    } else if (rawProps && typeof rawProps === 'object') {
+      // 旧格式: properties 是以 piid 为 key 的对象
+      const rawPropsObj = rawProps as Record<string, unknown>;
+      for (const piid of Object.keys(rawPropsObj)) {
+        const prop = rawPropsObj[piid] as Record<string, unknown>;
+
+        let propType: string;
+        const fmt = prop['format'] as string;
+        if (fmt?.startsWith('int')) {
+          propType = 'int';
+        } else if (fmt?.startsWith('uint')) {
+          propType = 'uint';
+        } else {
+          propType = fmt || 'string';
+        }
+
+        const access = prop['access'] as string[];
+        const rw =
+          (access?.includes('read') ? 'r' : '') +
+          (access?.includes('write') ? 'w' : '');
+
         let name = prop['name'] as string;
         if (propNamesSeen.includes(name)) {
           name = `${service['name']}-${name}`;
@@ -716,18 +777,38 @@ export async function getDeviceInfo(
           description: `${prop['description'] || ''} / ${prop['desc_zh_cn'] || ''}`,
           type: propType as DevPropDef['type'],
           rw,
-          unit: prop['unit'] || null,
-          range: prop['value-range'] || null,
-          'value-list': prop['value-list'] || null,
-          method: { siid: Number(siid), piid: Number(piid) },
+          unit: (prop['unit'] as string) || null,
+          range: (prop['value-range'] as number[]) || (prop['valueRange'] as number[]) || null,
+          'value-list': ((prop['value-list'] as DevPropDef['value-list'])?.length ? (prop['value-list'] as DevPropDef['value-list']) : null) ||
+            ((prop['valueList'] as DevPropDef['value-list'])?.length ? (prop['valueList'] as DevPropDef['value-list']) : null),
+          method: { siid, piid: Number(piid) },
         });
       }
     }
 
     // 解析动作
-    if (service['actions']) {
-      for (const aiid of Object.keys(service['actions'])) {
-        const act = service['actions'][aiid];
+    const rawActions = service['actions'];
+    if (rawActions && Array.isArray(rawActions)) {
+      // 新格式: actions 是数组
+      const actionsArr = rawActions as Record<string, unknown>[];
+      for (const act of actionsArr) {
+        let name = act['type'] as string;
+        if (actionNamesSeen.includes(name)) {
+          name = `${service['type']}-${name}`;
+        }
+        actionNamesSeen.push(name);
+
+        result.actions.push({
+          name,
+          description: `${act['description'] || ''}`,
+          method: { siid, aiid: Number(act['iid']) },
+        });
+      }
+    } else if (rawActions && typeof rawActions === 'object') {
+      // 旧格式: actions 是以 aiid 为 key 的对象
+      const rawActionsObj = rawActions as Record<string, unknown>;
+      for (const aiid of Object.keys(rawActionsObj)) {
+        const act = rawActionsObj[aiid] as Record<string, unknown>;
 
         let name = act['name'] as string;
         if (actionNamesSeen.includes(name)) {
@@ -738,7 +819,7 @@ export async function getDeviceInfo(
         result.actions.push({
           name,
           description: `${act['description'] || ''} / ${act['desc_zh_cn'] || ''}`,
-          method: { siid: Number(siid), aiid: Number(aiid) },
+          method: { siid, aiid: Number(aiid) },
         });
       }
     }
