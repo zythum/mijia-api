@@ -1,0 +1,74 @@
+{
+  "name": "@zythum02/mijia-api",
+  "version": "0.1.0",
+  "description": "小米米家设备控制 — TypeScript API / CLI / MCP Server，支持代码调用、命令行控制、AI 智能体集成",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cli": {
+      "import": "./dist/cli.js",
+      "types": "./dist/cli.d.ts"
+    },
+    "./cache/memory-cache": {
+      "import": "./dist/cache/memory-cache.js",
+      "types": "./dist/cache/memory-cache.d.ts"
+    },
+    "./cache/disk-cache": {
+      "import": "./dist/cache/disk-cache.js",
+      "types": "./dist/cache/disk-cache.d.ts"
+    }
+  },
+  "bin": {
+    "mijia-api": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/cli.js",
+    "mcp": "node dist/cli.js mcp"
+  },
+  "keywords": [
+    "mijia",
+    "miot",
+    "xiaomi",
+    "xiaomi-smart-home",
+    "mi-home"
+  ],
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Do1e/mijia-api"
+  },
+  "homepage": "https://github.com/Do1e/mijia-api",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "js-yaml": "^4.1.1",
+    "pako": "^2.1.0",
+    "qrcode-terminal": "^0.12.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.13.0",
+    "@types/pako": "^2.0.4",
+    "@types/qrcode-terminal": "^0.12.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  }
+}
