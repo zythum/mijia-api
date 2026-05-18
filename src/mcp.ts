@@ -29,7 +29,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { execSync } from 'node:child_process';
 import { z } from 'zod';
 
-import { mijiaAPI, getDeviceInfo, mijiaDevice, version } from './index.js';
+import { MijiaAPI, getDeviceInfo, MijiaDevice, version } from './index.js';
 import type { Cache, QRInfo } from './index.js';
 
 /**
@@ -51,8 +51,8 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   const { cache } = options;
 
   /** 每次调用创建新实例，确保 login 后的状态能反映到后续请求 */
-  async function getApi(): Promise<mijiaAPI> {
-    const api = new mijiaAPI(cache);
+  async function getApi(): Promise<MijiaAPI> {
+    const api = new MijiaAPI(cache);
     if (!api.available) {
       throw new Error('未登录或 token 已过期，请先调用 login 工具');
     }
@@ -77,7 +77,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
     {},
     async () => {
       try {
-        const api = new mijiaAPI(cache);
+        const api = new MijiaAPI(cache);
         await api.QRlogin((info: QRInfo) => {
           openBrowser(info.qrImageUrl);
         });
@@ -346,7 +346,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
     async ({ did, devName, propName }) => {
       try {
         const api = await getApi();
-        const device = await mijiaDevice.create(api, { did, devName });
+        const device = await MijiaDevice.create(api, { did, devName });
         const value = await device.get(propName);
         const unit = device.propList[propName]?.unit || '';
         return { content: [{ type: 'text', text: `${device.name} → ${propName} = ${value} ${unit}` }] };
@@ -385,7 +385,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
     async ({ did, devName, propName, value }) => {
       try {
         const api = await getApi();
-        const device = await mijiaDevice.create(api, { did, devName });
+        const device = await MijiaDevice.create(api, { did, devName });
         await device.set(propName, value);
         const unit = device.propList[propName]?.unit || '';
         return { content: [{ type: 'text', text: `✅ ${device.name} → ${propName} = ${value} ${unit}` }] };
@@ -413,15 +413,15 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
     async ({ prompt, speakerDid, quiet }) => {
       try {
         const api = await getApi();
-        let speaker: mijiaDevice;
+        let speaker: MijiaDevice;
 
         if (speakerDid) {
-          speaker = await mijiaDevice.create(api, { did: speakerDid });
+          speaker = await MijiaDevice.create(api, { did: speakerDid });
         } else {
           const devices = await api.getDevicesList();
           const found = devices.find((d) => (d['model'] as string).includes('xiaomi.wifispeaker'));
           if (!found) return { content: [{ type: 'text', text: '未找到小爱音箱' }], isError: true };
-          speaker = await mijiaDevice.create(api, { did: found['did'] as string });
+          speaker = await MijiaDevice.create(api, { did: found['did'] as string });
         }
 
         await speaker.runAction('execute-text-directive', [prompt, quiet ? 1 : 0]);

@@ -2,16 +2,16 @@
  * @file 设备操作高级封装
  *
  * 提供：
- * - `mijiaDevice`：像操作普通 JavaScript 对象一样控制米家设备
+ * - `MijiaDevice`：像操作普通 JavaScript 对象一样控制米家设备
  * - `getDeviceInfo`：从 https://home.miot-spec.com/ 获取设备规格（含本地缓存）
  * - `DevProp` / `DevAction`：属性与动作的描述类
  *
- * 通过 `mijiaDevice.create()` 工厂方法创建实例后，
+ * 通过 `MijiaDevice.create()` 工厂方法创建实例后，
  * 可以用 `device.get('brightness')`、`device.set('on', true)` 等方式操作设备，
  * 无需手动处理 siid/piid 等底层细节。
  */
 
-import type { mijiaAPI, PropParam, SetPropParam, ActionParam } from './apis.js';
+import type { MijiaAPI, PropParam, SetPropParam, ActionParam } from './apis.js';
 import type { Cache } from '../cache/cache.js';
 import {
   DeviceActionError,
@@ -159,12 +159,12 @@ export class DevAction {
 }
 
 // ============================================================
-// mijiaDevice — 高级设备控制类
+// MijiaDevice — 高级设备控制类
 // ============================================================
 
 /** @internal 设备初始化参数 */
 interface DeviceInitParams {
-  api: mijiaAPI;
+  api: MijiaAPI;
   did: string;
   model: string;
   name: string;
@@ -177,15 +177,15 @@ interface DeviceInitParams {
  * 米家设备高级控制类
  *
  * 封装了设备属性读写和动作执行，无需关心 siid/piid 细节。
- * 需要通过静态工厂方法 `mijiaDevice.create()` 异步创建实例。
+ * 需要通过静态工厂方法 `MijiaDevice.create()` 异步创建实例。
  *
  * @example
  * ```ts
- * const api = new mijiaAPI();
+ * const api = new MijiaAPI();
  * await api.login();
  *
  * // 通过设备名称创建
- * const lamp = await mijiaDevice.create(api, { devName: '我的台灯' });
+ * const lamp = await MijiaDevice.create(api, { devName: '我的台灯' });
  *
  * // 读写属性
  * const brightness = await lamp.get('brightness');
@@ -196,8 +196,8 @@ interface DeviceInitParams {
  * await lamp.runAction('toggle');
  * ```
  */
-export class mijiaDevice {
-  readonly api: mijiaAPI;
+export class MijiaDevice {
+  readonly api: MijiaAPI;
   readonly did: string;
   readonly model: string;
   readonly name: string;
@@ -217,14 +217,14 @@ export class mijiaDevice {
   }
 
   /**
-   * 创建 mijiaDevice 实例（异步工厂方法）
+   * 创建 MijiaDevice 实例（异步工厂方法）
    *
    * 自动完成：
    * 1. 根据 did 或 devName 查找设备
    * 2. 从 miot-spec 获取设备规格（含本地缓存）
    * 3. 构建属性/动作索引
    *
-   * @param api     mijiaAPI 实例（需已登录）
+   * @param api     MijiaAPI 实例（需已登录）
    * @param options 初始化选项
    * @param options.did      设备 ID（优先于 devName）
    * @param options.devName  设备名称（米家 APP 中设定的名称）
@@ -235,13 +235,13 @@ export class mijiaDevice {
    * @throws {MultipleDevicesFoundError} 找到多个同名设备
    */
   static async create(
-    api: mijiaAPI,
+    api: MijiaAPI,
     options: {
       did?: string;
       devName?: string;
       sleepTime?: number;
     },
-  ): Promise<mijiaDevice> {
+  ): Promise<MijiaDevice> {
     const sleepTime = options.sleepTime ?? 0.5;
 
     if (!options.did && !options.devName) {
@@ -305,7 +305,7 @@ export class mijiaDevice {
       actionList[actDef.name] = new DevAction(actDef);
     }
 
-    return new mijiaDevice({
+    return new MijiaDevice({
       api,
       did,
       model,

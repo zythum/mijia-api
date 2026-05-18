@@ -33,9 +33,9 @@ yarn add @zythum02/mijia-api
 首次使用需要通过二维码登录，认证数据会自动持久化：
 
 ```typescript
-import { mijiaAPI } from '@zythum02/mijia-api';
+import { MijiaAPI } from '@zythum02/mijia-api';
 
-const api = new mijiaAPI();
+const api = new MijiaAPI();
 await api.login();  // 终端打印二维码，用米家 APP 扫码
 ```
 
@@ -63,15 +63,15 @@ await api.setDevicesProp({
 });
 ```
 
-### 高级封装（mijiaDevice）
+### 高级封装（MijiaDevice）
 
 无需关心 siid/piid：
 
 ```typescript
-import { mijiaAPI, mijiaDevice } from '@zythum02/mijia-api';
+import { MijiaAPI, MijiaDevice } from '@zythum02/mijia-api';
 
-const api = new mijiaAPI();
-const lamp = await mijiaDevice.create(api, { devName: '台灯' });
+const api = new MijiaAPI();
+const lamp = await MijiaDevice.create(api, { devName: '台灯' });
 
 await lamp.set('brightness', 60);
 await lamp.set('on', false);
@@ -83,17 +83,17 @@ const brightness = await lamp.get('brightness');
 API 层无 Node.js 依赖，可在浏览器中使用：
 
 ```typescript
-import { mijiaAPI } from '@zythum02/mijia-api';
-const api = new mijiaAPI();  // 默认 MemoryCache，数据在内存中
+import { MijiaAPI } from '@zythum02/mijia-api';
+const api = new MijiaAPI();  // 默认 MemoryCache，数据在内存中
 ```
 
 需要持久化时传入 `DiskCache`：
 
 ```typescript
-import { mijiaAPI } from '@zythum02/mijia-api';
+import { MijiaAPI } from '@zythum02/mijia-api';
 import { DiskCache } from '@zythum02/mijia-api/cache/disk-cache';
 
-const api = new mijiaAPI(new DiskCache('/custom/path'));
+const api = new MijiaAPI(new DiskCache('/custom/path'));
 ```
 
 ---
@@ -278,8 +278,8 @@ src/
 │   ├── memory-cache.ts       # 内存缓存（浏览器可用）
 │   └── disk-cache.ts         # 磁盘缓存（Node.js）
 ├── apis/
-│   ├── apis.ts               # mijiaAPI — 核心 API
-│   └── devices.ts            # mijiaDevice / getDeviceInfo
+│   ├── apis.ts               # MijiaAPI — 核心 API
+│   └── devices.ts            # MijiaDevice / getDeviceInfo
 ├── cli.ts                    # CLI 入口
 ├── mcp.ts                    # MCP Server（createMcpServer）
 ├── utils/

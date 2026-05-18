@@ -6,18 +6,18 @@
  *
  * 使用方式：
  * ```ts
- * import { mijiaAPI, mijiaDevice, getDeviceInfo } from 'mijia-api';
+ * import { MijiaAPI, MijiaDevice, getDeviceInfo } from 'mijia-api';
  * ```
  */
 
 // 核心 API 类
-export { mijiaAPI } from './apis/apis.js';
+export { MijiaAPI } from './apis/apis.js';
 
 // API 参数类型
 export type { AuthData, PropParam, SetPropParam, ActionParam, QRInfo } from './apis/apis.js';
 
 // 高级设备封装
-export { getDeviceInfo, mijiaDevice, DevProp, DevAction } from './apis/devices.js';
+export { getDeviceInfo, MijiaDevice, DevProp, DevAction } from './apis/devices.js';
 
 // 设备规格类型
 export type { DeviceInfo, DevPropDef, DevActionDef } from './apis/devices.js';
@@ -37,9 +37,6 @@ export {
 
 // Cache 接口
 export type { Cache } from './cache/cache.js';
-
-// 实用工具
-export { decrypt } from './utils/crypto.js';
 
 // 版本信息
 export { version } from './version.js';

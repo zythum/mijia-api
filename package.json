@@ -1,6 +1,6 @@
 {
   "name": "@zythum02/mijia-api",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "小米米家设备控制 — TypeScript API / CLI / MCP Server，支持代码调用、命令行控制、AI 智能体集成",
   "type": "module",
   "main": "./dist/index.js",

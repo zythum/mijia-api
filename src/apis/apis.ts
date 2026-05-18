@@ -1,5 +1,5 @@
 /**
- * @file 米家 API 核心封装 — mijiaAPI 类
+ * @file 米家 API 核心封装 — MijiaAPI 类
  *
  * 提供对小米米家云平台的全功能 API 封装，包括：
  * - 二维码登录 / Token 自动刷新
@@ -189,7 +189,7 @@ export interface ActionParam {
 }
 
 // ============================================================
-// mijiaAPI 主类
+// MijiaAPI 主类
 // ============================================================
 
 /**
@@ -199,13 +199,13 @@ export interface ActionParam {
  *
  * @example
  * ```ts
- * const api = new mijiaAPI();
+ * const api = new MijiaAPI();
  * await api.login();
  * const homes = await api.getHomesList();
  * const devices = await api.getDevicesList();
  * ```
  */
-export class mijiaAPI {
+export class MijiaAPI {
   /** 区域设置，如 "zh_CN" */
   private locale: string;
   /** 米家 API 基础 URL */
@@ -1141,8 +1141,8 @@ export class mijiaAPI {
    *
    * @example
    * ```ts
-   * import { mijiaAPI } from 'mijia-api';
-   * const api = new mijiaAPI();
+   * import { MijiaAPI } from 'mijia-api';
+   * const api = new MijiaAPI();
    *
    * const ret = await api.getStatistics({
    *   did: '123456',

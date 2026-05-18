@@ -25,7 +25,7 @@ import { execSync } from 'node:child_process';
 import qrcode from 'qrcode-terminal';
 import yaml from 'js-yaml';
 
-import { mijiaAPI, getDeviceInfo, mijiaDevice, version } from './index.js';
+import { MijiaAPI, getDeviceInfo, MijiaDevice, version } from './index.js';
 import type { QRInfo } from './apis/apis.js';
 import { DiskCache } from './cache/disk-cache.js';
 
@@ -39,8 +39,8 @@ function getCache(): DiskCache {
 }
 
 /** 初始化 API（无有效 token 时报错，提示用户手动 login） */
-async function initApi(): Promise<mijiaAPI> {
-  const api = new mijiaAPI(getCache());
+async function initApi(): Promise<MijiaAPI> {
+  const api = new MijiaAPI(getCache());
   if (!api.available) {
     console.error('❌ 未登录或 token 已过期，请先执行：');
     console.error('   npx mijia-api login');
@@ -109,13 +109,12 @@ program
   .name('mijia-api')
   .version(version)
   .description('小米米家设备 CLI')
-  .addOption(new Option('--cache-dir <path>', '缓存根目录（默认 ~/.config/mijia-api）'))
+  .addOption(new Option('--cache-dir <path>', '自定义缓存根目录（默认 ~/.config/mijia-api）'))
+  .addOption(new Option('--auth-secret-key <key>', '自定义认证文件加密密钥'))
   .addOption(new Option('-o, --output <format>', '输出格式').default('text').choices(['text', 'yaml', 'json']))
   .hook('preAction', () => {
     const opts = program.opts();
-    if (opts.cacheDir) {
-      _diskCache = new DiskCache(opts.cacheDir);
-    }
+    _diskCache = new DiskCache(opts.cacheDir, opts.authSecretKey);
   });
 
 // ---- 认证 ----
@@ -125,7 +124,7 @@ program
   .description('登录米家账号')
   .option('-b, --browser', '通过浏览器打开二维码图片（替代终端打印）')
   .action(async (options) => {
-    const api = new mijiaAPI(getCache());
+    const api = new MijiaAPI(getCache());
     await api.QRlogin(createQRHandler(options.browser));
     console.log('✅ 登录成功');
   });
@@ -338,7 +337,7 @@ program
   .requiredOption('--model <model>', '设备型号，如 yeelink.light.lamp4')
   .action(async (options) => {
     const output = program.opts().output as OutputMode;
-    const info = await getDeviceInfo(options.model);
+    const info = await getDeviceInfo(options.model, getCache());
     if (output !== 'text') {
       printOutput(info, output);
     } else {
@@ -354,7 +353,7 @@ program
   .requiredOption('--prop-name <name>', '属性名，如 brightness')
   .action(async (options) => {
     const api = await initApi();
-    const device = await mijiaDevice.create(api, { did: options.did, devName: options.devName });
+    const device = await MijiaDevice.create(api, { did: options.did, devName: options.devName });
     const value = await device.get(options.propName);
     const unit = device.propList[options.propName]?.unit || '';
     console.log(`${device.name} 的 ${options.propName} = ${value} ${unit}`);
@@ -369,7 +368,7 @@ program
   .requiredOption('--value <value>', '属性值，如 true、80')
   .action(async (options) => {
     const api = await initApi();
-    const device = await mijiaDevice.create(api, { did: options.did, devName: options.devName });
+    const device = await MijiaDevice.create(api, { did: options.did, devName: options.devName });
     try {
       await device.set(options.propName, options.value);
     } catch (err) {
@@ -390,15 +389,15 @@ program
   .option('--quiet', '静默执行，小爱不语音回复')
   .action(async (prompt: string, options) => {
     const api = await initApi();
-    let speaker: mijiaDevice;
+    let speaker: MijiaDevice;
 
     if (options.speakerDid) {
-      speaker = await mijiaDevice.create(api, { did: options.speakerDid });
+      speaker = await MijiaDevice.create(api, { did: options.speakerDid });
     } else {
       const devices = await api.getDevicesList();
       const found = devices.find((d) => (d['model'] as string).includes('xiaomi.wifispeaker'));
       if (!found) throw new Error('未找到小爱音箱');
-      speaker = await mijiaDevice.create(api, { did: found['did'] as string });
+      speaker = await MijiaDevice.create(api, { did: found['did'] as string });
     }
 
     await speaker.runAction('execute-text-directive', [prompt, options.quiet ? 1 : 0]);
