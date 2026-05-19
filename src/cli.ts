@@ -4,7 +4,7 @@
  * @file 米家 CLI — 命令行控制小米米家设备
  *
  * 子命令一览：
- *   认证类     login, logout
+ *   认证类     login, logout, whoami
  *   查询类     list-homes, list-rooms, list-devices(list-devices|ls),
  *              list-scenes, list-consumables
  *   操作类     get, set, run-scene, device-info
@@ -135,6 +135,17 @@ program
   .action(async () => {
     getCache().deleteAuthData();
     console.log('✅ 已清除认证信息');
+  });
+
+program
+  .command('whoami')
+  .description('查看当前登录的账号信息（脱敏显示）')
+  .action(async () => {
+    const api = new MijiaAPI(getCache());
+    const info = await api.whoami();
+    for (const [key, value] of Object.entries(info)) {
+      console.log(`${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`);
+    }
   });
 
 // ---- 查询类 ----

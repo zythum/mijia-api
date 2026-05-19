@@ -1115,6 +1115,54 @@ export class MijiaAPI {
   }
 
   // ============================================================
+  // 公开 API：账号信息
+  // ============================================================
+
+  /**
+   * 获取当前登录账号信息（脱敏输出）
+   *
+   * 返回认证数据的脱敏版本，敏感字符串值仅显示首尾 4 位，
+   * 中间最多 12 个 `*`，防止敏感信息泄露。
+   *
+   * userId、cUserId、deviceId、expireTime、saveTime 不视为隐私数据，原样显示。
+   *
+   * @returns 脱敏后的账号信息对象
+   *
+   * @example
+   * ```ts
+   * const info = api.whoami();
+   * console.log(info.userId);    // "123456789"
+   * console.log(info.ssecurity); // "abcd********efgh"
+   * ```
+   */
+  async whoami(): Promise<Record<string, unknown>> {
+    if (!this.available) {
+      return { login: false, message: '未登录' };
+    }
+
+    const masked: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(this.authData)) {
+      if (!['userId', 'cUserId', 'deviceId', 'expireTime', 'saveTime'].includes(key) && (typeof value === 'string' || typeof value === 'number')) {
+        // 敏感值脱敏：转字符串，保留首尾 4 位，中间最多 12 个 *
+        const str = String(value);
+        masked[key] =
+          str.length <= 4
+            ? '****'
+            : str.length <= 6
+              ? str.slice(0, 4) + '*'.repeat(Math.min(str.length - 4, 12))
+              : str.slice(0, 4) + '*'.repeat(12) + str.slice(-4);
+      } else {
+        // 非敏感字段原样保留
+        masked[key] = value;
+      }
+    }
+
+    masked['login'] = true;
+    return masked;
+  }
+
+  // ============================================================
   // 公开 API：统计数据
   // ============================================================
 
