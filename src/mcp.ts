@@ -93,7 +93,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'logout',
     {
-      title: '退出登录',
+      title: '退出米家账号登录',
       description: '清除本地保存的认证信息（auth.json），退出当前登录的米家账号。' +
         '之后需要重新 login 才能使用其他工具。',
     },
@@ -113,7 +113,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'whoami',
     {
-      title: '查看当前账号',
+      title: '查看当前米家账号',
       description: '查看当前登录的米家账号信息（脱敏显示）。' +
         '返回认证数据的脱敏版本，敏感仅显示首尾 4 位，其余用 * 代替。' +
         '适合确认当前登录的是哪个账号，以及 Token 是否即将过期。',
@@ -139,7 +139,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'list-homes',
     {
-      title: '列出家庭',
+      title: '列出米家家庭',
       description: '列出当前账号下的所有家庭。每个家庭包含 ID、名称、地址、房间列表和各自设备数量。' +
         '适合先调此工具了解整体结构，再结合 list-rooms 查看具体设备。',
     },
@@ -175,7 +175,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'list-rooms',
     {
-      title: '按房间列出设备',
+      title: '按房间列出米家设备',
       description: '按房间维度列出设备。每个房间会显示其中的设备列表，' +
         '包含 did、名称、型号、在线状态，并标注是否为灯设备（isLight）。' +
         '适合用户说"客厅有什么设备"或"关掉所有灯"这类场景。',
@@ -227,7 +227,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'list-devices',
     {
-      title: '列出所有设备',
+      title: '列出所有米家设备',
       description: '列出当前账号下的所有设备（含共享设备）。返回 did、名称、型号、在线状态。' +
         '如果用户需要知道有哪些设备可用，优先用此工具。' +
         '如果用户按房间问，优先用 list-rooms 更直观。',
@@ -255,7 +255,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'list-scenes',
     {
-      title: '列出场景',
+      title: '列出米家场景',
       description: '列出账号下所有手动场景。返回场景 ID、名称、所属家庭 ID。' +
         '场景是在米家 APP 中预设的自动化操作（如"离家模式"）。' +
         '执行场景请用 run-scene 工具，传入 sceneId。',
@@ -288,7 +288,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'list-consumables',
     {
-      title: '列出耗材',
+      title: '列出米家耗材',
       description: '列出所有需要更换的耗材（如净水器滤芯、空气净化器滤网等）。' +
         '返回耗材所属设备名称、did，以及耗材的描述和当前值。' +
         '适合用户问"我的滤芯还能用多久"这类问题。',
@@ -323,7 +323,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'run-scene',
     {
-      title: '执行场景',
+      title: '执行米家场景',
       description: '执行一个手动场景。场景 ID 可通过 list-scenes 获取。' +
         '如果不传 homeId 则会自动遍历所有家庭查找场景。' +
         '如果已知 homeId，传它可以避免一次额外的场景列表请求。',
@@ -353,7 +353,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'device-info',
     {
-      title: '查询设备规格',
+      title: '查询米家设备规格',
       description: '查询设备规格信息。返回设备支持的所有属性（名称、类型、范围、单位）和动作列表。' +
         '在调用 get-prop / set-prop 之前，建议先调此工具确认设备的属性名称和取值范围。' +
         '例如灯的常用属性：on（开关）、brightness（亮度 1-100）、color-temperature（色温 2700-6500）。' +
@@ -375,7 +375,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'get-prop',
     {
-      title: '读取属性',
+      title: '读取米家设备属性',
       description: '读取设备的某个属性当前值。支持通过 did 或 devName 指定设备，propName 传属性名称。' +
         '属性名称可通过 device-info 查询获得。' +
         '如果不知道 did，先用 list-devices 或 list-rooms 查看。' +
@@ -409,7 +409,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'set-prop',
     {
-      title: '设置属性',
+      title: '设置米家设备属性',
       description: '设置设备的某个属性值。支持通过 did 或 devName 指定设备。' +
         '属性名称和取值范围请先用 device-info 查询。' +
         '操作示例：' +
@@ -453,7 +453,7 @@ export function createMcpServer(options: { cache: Cache }): McpServer {
   server.registerTool(
     'run-speaker',
     {
-      title: '语音指令',
+      title: '米家语音指令',
       description: '通过小爱音箱执行自然语言语音指令。适合用户说"帮我关灯"这样模糊的指令，' +
         '小爱音箱会自动理解并执行。' +
         '也可以用此工具执行一些 API 不直接支持的操作。' +

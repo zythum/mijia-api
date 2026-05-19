@@ -4,4 +4,4 @@
  * 发布前请手动更新此版本号以匹配 package.json。
  */
 
-export const version: string = '0.1.3';
+export const version: string = '0.1.4';
